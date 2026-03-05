@@ -642,9 +642,11 @@
     const typeLabels = rewards.map(r => r.type);
     const imgCount  = typeLabels.filter(t => t === 'image').length;
     const factCount = typeLabels.filter(t => t === 'fact').length;
+    const gifCount = typeLabels.filter(t => t === 'gif').length;
     const parts = [];
     if (imgCount)  parts.push(`${imgCount} image${imgCount > 1 ? 's' : ''}`);
     if (factCount) parts.push(`${factCount} fact${factCount > 1 ? 's' : ''}`);
+    if (gifCount) parts.push(`${gifCount} gif${gifCount > 1 ? 's' : ''}`);
     rewardsCount.textContent = `You earned: ${parts.join(' + ')}`;
 
     buildCards();
@@ -672,7 +674,7 @@
   }
 
   function renderCard(reward) {
-    if (reward.type === 'image') {
+    if (reward.type === 'image' || reward.type === 'gif') {
       return `
         <img src="${reward.url}" alt="${reward.title}" loading="lazy" />
         <div class="image-overlay">

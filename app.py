@@ -21,13 +21,17 @@ client = genai.Client(api_key=os.getenv('GOOGLE_GEMINI_KEY'))
 #    2. Add a resolver in `resolve_rewards()`
 # ─────────────────────────────────────────────
 REWARD_TYPES = {
+    "gif": {
+        "weight": 20,
+        "description": "A funny or adorable gif of the a cat - the most valuable reward",
+    },
     "image": {
         "weight": 10,
-        "description": "A beautiful thematic image - the most valuable reward",
+        "description": "A random image of a cat",
     },
     "fact": {
         "weight": 1,
-        "description": "A fascinating, surprising fun fact - a lightweight reward",
+        "description": "A fact about cats - easy achievable fact",
     },
 }
 
@@ -45,6 +49,7 @@ def resolve_rewards(raw: list[dict]) -> dict:
 
     num_images = len([ reward for reward in raw if reward.get('type') == 'image'])
     num_facts = len([ reward for reward in raw if reward.get('type') == 'fact'])
+    gifs = [ reward for reward in raw if reward.get('type') == 'gif' ]
 
     img_response = requests.get(f'https://api.thecatapi.com/v1/images/search?limit={num_images}')
     fact_response = requests.get(f'https://catfact.ninja/facts?limit={num_facts}')
@@ -66,6 +71,16 @@ def resolve_rewards(raw: list[dict]) -> dict:
             "title": "Did you know?",
             "content": fact.get("fact", ""),
             "emoji": random.choice(cats),
+        })
+
+    for gif in gifs:
+        random_i = random.randint(1, 1000)
+        outputs.append({
+            "type": "gif",
+            "title": '',
+            "description": '',
+            "url": f'https://cataas.com/cat/gif?r={random_i}',
+            "theme": '',
         })
 
     random.shuffle(outputs)
@@ -96,6 +111,10 @@ Rules:
 - More impressive tasks deserve more rewards and more high-weight reward types.
 - You may give any combination of reward types (repeats allowed).
 - You need to generate a score that is between 0 and 10
+- A score of zero should get 1 fact
+- A score of 10 should get 5x gifs, 3x images and 2x facts
+- All rewards should use these two examples and the upper and lower bound.
+- A score of 5 could have 5x gifs or 5x images or a mix, or 10x facts. Gauge the task based on the context provided by the person.
 
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation):
 {{
