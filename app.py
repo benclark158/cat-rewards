@@ -47,9 +47,9 @@ def resolve_rewards(raw: list[dict]) -> dict:
     """Turn the LLM's raw reward object into a fully hydrated reward."""
     outputs = []
 
-    num_images = len([ reward for reward in raw if reward.get('type') == 'image'])
-    num_facts = len([ reward for reward in raw if reward.get('type') == 'fact'])
-    gifs = [ reward for reward in raw if reward.get('type') == 'gif' ]
+    num_images = len([ reward for reward in raw if reward == 'image'])
+    num_facts = len([ reward for reward in raw if reward == 'fact'])
+    gifs = [ reward for reward in raw if reward == 'gif' ]
 
     img_response = requests.get(f'https://api.thecatapi.com/v1/images/search?limit={num_images}')
     fact_response = requests.get(f'https://catfact.ninja/facts?limit={num_facts}')
@@ -115,24 +115,18 @@ Rules:
 - A score of 10 should get 5x gifs, 3x images and 2x facts
 - All rewards should use these two examples and the upper and lower bound.
 - A score of 5 could have 5x gifs or 5x images or a mix, or 10x facts. Gauge the task based on the context provided by the person.
-- Do not over reward tasks.
+- Do not over reward tasks, be realistic
+- Do not reward made up tasks that are not feasible. Like flying to the moon or curing cancer
 
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation):
 {{
-  "rewards": [
-    {{
-      "type": "image",
-    }},
-    {{
-      "type": "fact",
-    }}
-  ],
+  "rewards": ["image", "fact"],
   "message": "A short, warm, personalised congratulatory message (1-2 sentences) for completing this task.",
   "score": 7.9,
 }}"""
 
     response = client.models.generate_content(
-        model='gemini-3-flash-preview',
+        model='gemini-3.1-flash-lite-preview',
         contents=prompt,
     )
 
