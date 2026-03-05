@@ -115,6 +115,7 @@ Rules:
 - A score of 10 should get 5x gifs, 3x images and 2x facts
 - All rewards should use these two examples and the upper and lower bound.
 - A score of 5 could have 5x gifs or 5x images or a mix, or 10x facts. Gauge the task based on the context provided by the person.
+- Do not over reward tasks.
 
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation):
 {{
