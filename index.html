@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CatReward</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & BASE ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0905;
+      --surface:   #12100a;
+      --gold:      #c9963a;
+      --gold-lt:   #e8be6a;
+      --gold-dim:  #7a5a20;
+      --cream:     #f0e6ce;
+      --muted:     #6b5e45;
+      --fact-bg:   #0f1a14;
+      --fact-acc:  #4caf6e;
+      --radius:    18px;
+      --card-w:    min(520px, 90vw);
+      --card-h:    min(380px, 62vw);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ──────────────────────────────────── */
+    header {
+      width: 100%;
+      text-align: center;
+      padding: 52px 24px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .wordmark {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .wordmark span {
+      color: var(--cream);
+      font-style: italic;
+    }
+
+    .tagline {
+      margin-top: 10px;
+      font-size: 1rem;
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+    }
+
+    .divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin: 28px auto 0;
+    }
+
+    /* ── MAIN ────────────────────────────────────── */
+    main {
+      width: 100%;
+      max-width: 720px;
+      padding: 48px 24px 80px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    /* ── INPUT SECTION ───────────────────────────── */
+    .input-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .input-section.hidden {
+      opacity: 0;
+      display: none;
+      pointer-events: none;
+      transform: translateY(-16px);
+    }
+
+    .input-label {
+      font-size: 1.45rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      text-align: center;
+      color: var(--cream);
+    }
+
+    .input-label em {
+      color: var(--gold-lt);
+      font-style: italic;
+    }
+
+    .textarea-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      background: var(--surface);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius);
+      color: var(--cream);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 300;
+      line-height: 1.6;
+      padding: 20px 24px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    textarea::placeholder { color: var(--muted); }
+
+    textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,150,58,0.12), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .submit-btn {
+      position: relative;
+      padding: 14px 48px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      border-radius: 100px;
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      overflow: hidden;
+      transition: color 0.35s;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+    }
+
+    .submit-btn:hover { color: var(--bg); }
+    .submit-btn:hover::before { transform: translateX(0); }
+    .submit-btn span { position: relative; z-index: 1; }
+    .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .submit-btn:disabled::before { display: none; }
+
+    /* ── LOADING ─────────────────────────────────── */
+    .loading-section {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .loading-section.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .loading-orbs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .orb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse-orb 1.4s ease-in-out infinite;
+    }
+    .orb:nth-child(2) { animation-delay: 0.2s; background: var(--gold-lt); }
+    .orb:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse-orb {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .loading-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+
+    /* ── RESULT SECTION ──────────────────────────── */
+    .result-section {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+
+    .result-section.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .congrats-message {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .congrats-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .congrats-text {
+      font-size: 1.45rem;
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--cream);
+    }
+
+    .rewards-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      margin-top: 8px;
+    }
+
+    /* ── CAROUSEL ────────────────────────────────── */
+    .carousel-outer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .carousel-viewport {
+      width: var(--card-w);
+      height: var(--card-h);
+      position: relative;
+      perspective: 1200px;
+    }
+
+    /* Stack of cards */
+    .reward-card {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      transform-origin: center bottom;
+      transition: transform 0.55s cubic-bezier(.4,0,.2,1), opacity 0.55s;
+      will-change: transform, opacity;
+      cursor: default;
+    }
+
+    /* image card */
+    .reward-card.type-image {
+      background: #1a1510;
+    }
+
+    .reward-card.type-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 28px 24px 22px;
+      background: linear-gradient(to top, rgba(5,3,1,0.95) 0%, rgba(5,3,1,0.6) 60%, transparent 100%);
+    }
+
+    .card-type-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .type-image .card-type-badge {
+      background: rgba(201,150,58,0.18);
+      color: var(--gold-lt);
+      border: 1px solid var(--gold-dim);
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 400;
+      line-height: 1.3;
+      color: var(--cream);
+    }
+
+    .card-desc {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      font-style: italic;
+      color: rgba(240,230,206,0.65);
+    }
+
+    /* fact card */
+    .reward-card.type-fact {
+      background: var(--fact-bg);
+      border: 1px solid rgba(76,175,110,0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 36px;
+    }
+
+    .type-fact .card-type-badge {
+      background: rgba(76,175,110,0.12);
+      color: var(--fact-acc);
+      border: 1px solid rgba(76,175,110,0.3);
+    }
+
+    .fact-emoji {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 12px rgba(76,175,110,0.3));
+    }
+
+    .fact-content {
+      font-size: 1.35rem;
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--cream);
+    }
+
+    /* card states */
+    .reward-card[data-state="active"] {
+      transform: translateY(0) rotateX(0deg) scale(1);
+      opacity: 1;
+      z-index: 10;
+    }
+
+    .reward-card[data-state="prev"] {
+      transform: translateX(-110%) rotateY(8deg) scale(0.9);
+      opacity: 0;
+      z-index: 5;
+    }
+
+    .reward-card[data-state="next"] {
+      transform: translateX(110%) rotateY(-8deg) scale(0.9);
+      opacity: 0;
+      z-index: 5;
+    }
+
+    .reward-card[data-state="far"] {
+      transform: translateY(20px) scale(0.85);
+      opacity: 0;
+      z-index: 1;
+    }
+
+    /* Card entry animation */
+    @keyframes card-reveal {
+      from { opacity: 0; transform: translateY(30px) scale(0.92); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .reward-card.entering {
+      animation: card-reveal 0.65s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    /* ── NAV CONTROLS ─────────────────────────────── */
+    .carousel-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.25s, border-color 0.25s, transform 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(201,150,58,0.1);
+      border-color: var(--gold);
+      transform: scale(1.07);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      cursor: pointer;
+      transition: background 0.25s, transform 0.25s;
+    }
+
+    .dot.active {
+      background: var(--gold);
+      transform: scale(1.4);
+    }
+
+    /* ── RESET BTN ───────────────────────────────── */
+    .reset-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 100px;
+      transition: color 0.25s;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .reset-btn:hover { color: var(--cream); }
+
+    /* ── CONFETTI CANVAS ─────────────────────────── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── ERROR ───────────────────────────────────── */
+    .error-msg {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: #c0504f;
+      text-align: center;
+      display: none;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────── */
+    @media (max-width: 480px) {
+      :root { --card-h: 70vw; }
+      .fact-content { font-size: 1.1rem; }
+      .card-title { font-size: 1.15rem; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <div class="wordmark">Cat<span>Reward</span></div>
+  <div class="tagline">complete something. earn something.</div>
+  <div class="divider"></div>
+</header>
+
+<main>
+
+  <!-- ── INPUT ── -->
+  <section class="input-section" id="inputSection">
+    <p class="input-label">What did you <em>accomplish</em> today?</p>
+    <div class="textarea-wrap">
+      <textarea
+        id="taskInput"
+        placeholder="Describe your task in as much detail as you like…&#10;&#10;e.g. 'I finished writing the first chapter of my novel after putting it off for six months.'"
+        maxlength="1200"
+      ></textarea>
+    </div>
+    <div class="error-msg" id="errorMsg">Something went wrong. Please try again.</div>
+    <button class="submit-btn" id="submitBtn" onclick="submitTask()">
+      <span>Claim Rewards</span>
+    </button>
+  </section>
+
+  <!-- ── LOADING ── -->
+  <section class="loading-section" id="loadingSection">
+    <div class="loading-orbs">
+      <div class="orb"></div>
+      <div class="orb"></div>
+      <div class="orb"></div>
+    </div>
+    <div class="loading-text">evaluating your achievement…</div>
+  </section>
+
+  <!-- ── RESULTS ── -->
+  <section class="result-section" id="resultSection">
+    <div class="congrats-message">
+      <div class="congrats-label">Achievement Unlocked</div>
+      <div class="congrats-text" id="congratsText"></div>
+      <div class="rewards-count" id="rewardsCount"></div>
+    </div>
+
+    <div class="carousel-outer">
+      <div class="carousel-viewport" id="carouselViewport"></div>
+      <div class="carousel-controls">
+        <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>&#8592;</button>
+        <div class="dots" id="dotsContainer"></div>
+        <button class="nav-btn" id="nextBtn" onclick="navigate(1)">&#8594;</button>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="reset()">← Submit another task</button>
+  </section>
+
+</main>
+
+<script>
+  // ── STATE ──────────────────────────────────────────
+  const API_BASE = '';
+  let rewards = [];
+  let currentIdx = 0;
+
+  // ── DOM REFS ───────────────────────────────────────
+  const inputSection   = document.getElementById('inputSection');
+  const loadingSection = document.getElementById('loadingSection');
+  const resultSection  = document.getElementById('resultSection');
+  const taskInput      = document.getElementById('taskInput');
+  const submitBtn      = document.getElementById('submitBtn');
+  const errorMsg       = document.getElementById('errorMsg');
+  const congratsText   = document.getElementById('congratsText');
+  const rewardsCount   = document.getElementById('rewardsCount');
+  const viewport       = document.getElementById('carouselViewport');
+  const dotsContainer  = document.getElementById('dotsContainer');
+  const prevBtn        = document.getElementById('prevBtn');
+  const nextBtn        = document.getElementById('nextBtn');
+
+  // ── API CALL ───────────────────────────────────────
+  async function submitTask() {
+    const task = taskInput.value.trim();
+    if (!task) { taskInput.focus(); return; }
+
+    errorMsg.style.display = 'none';
+    submitBtn.disabled = true;
+
+    // hide input, show loading
+    inputSection.classList.add('hidden');
+    setTimeout(() => {
+      loadingSection.classList.add('visible');
+    }, 300);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/evaluate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      showResults(data);
+    } catch (err) {
+      console.error(err);
+      loadingSection.classList.remove('visible');
+      inputSection.classList.remove('hidden');
+      submitBtn.disabled = false;
+      errorMsg.style.display = 'block';
+    }
+  }
+
+  // ── SHOW RESULTS ───────────────────────────────────
+  function showResults(data) {
+    rewards = data.rewards || [];
+    currentIdx = 0;
+
+    congratsText.textContent = data.message || 'Well done!';
+    const typeLabels = rewards.map(r => r.type);
+    const imgCount  = typeLabels.filter(t => t === 'image').length;
+    const factCount = typeLabels.filter(t => t === 'fact').length;
+    const parts = [];
+    if (imgCount)  parts.push(`${imgCount} image${imgCount > 1 ? 's' : ''}`);
+    if (factCount) parts.push(`${factCount} fact${factCount > 1 ? 's' : ''}`);
+    rewardsCount.textContent = `You earned: ${parts.join(' + ')}`;
+
+    buildCards();
+    buildDots();
+
+    loadingSection.classList.remove('visible');
+    setTimeout(() => {
+      resultSection.style.display = 'flex';
+      requestAnimationFrame(() => resultSection.classList.add('visible'));
+      launchConfetti();
+    }, 300);
+  }
+
+  // ── BUILD CARDS ────────────────────────────────────
+  function buildCards() {
+    viewport.innerHTML = '';
+    rewards.forEach((reward, i) => {
+      const card = document.createElement('div');
+      card.className = `reward-card type-${reward.type}`;
+      card.dataset.index = i;
+      card.innerHTML = renderCard(reward);
+      viewport.appendChild(card);
+    });
+    updateCardStates();
+  }
+
+  function renderCard(reward) {
+    if (reward.type === 'image') {
+      return `
+        <img src="${reward.url}" alt="${reward.title}" loading="lazy" />
+        <div class="image-overlay">
+          <span class="card-type-badge">✦ Image Reward</span>
+          <div class="card-title">${reward.title}</div>
+          ${reward.description ? `<div class="card-desc">${reward.description}</div>` : ''}
+        </div>`;
+    }
+    if (reward.type === 'fact') {
+      return `
+        <div>
+          <span class="card-type-badge">◈ Fun Fact</span>
+          <div class="fact-emoji">${reward.emoji || '💡'}</div>
+          <div class="card-title">${reward.title}</div>
+          <div class="fact-content" style="margin-top:14px">${reward.content}</div>
+        </div>`;
+    }
+    // fallback for future reward types
+    return `<div style="padding:32px"><div class="card-title">${reward.title || 'Reward'}</div></div>`;
+  }
+
+  // ── CARD STATES ────────────────────────────────────
+  function updateCardStates() {
+    const cards = viewport.querySelectorAll('.reward-card');
+    cards.forEach((card, i) => {
+      const diff = i - currentIdx;
+      if (diff === 0) card.dataset.state = 'active';
+      else if (diff === -1) card.dataset.state = 'prev';
+      else if (diff === 1) card.dataset.state = 'next';
+      else card.dataset.state = 'far';
+    });
+
+    prevBtn.disabled = currentIdx === 0;
+    nextBtn.disabled = currentIdx === rewards.length - 1;
+    updateDots();
+  }
+
+  // ── NAVIGATE ──────────────────────────────────────
+  function navigate(dir) {
+    const newIdx = currentIdx + dir;
+    if (newIdx < 0 || newIdx >= rewards.length) return;
+    currentIdx = newIdx;
+    updateCardStates();
+  }
+
+  // ── DOTS ──────────────────────────────────────────
+  function buildDots() {
+    dotsContainer.innerHTML = '';
+    rewards.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => { currentIdx = i; updateCardStates(); };
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  function updateDots() {
+    dotsContainer.querySelectorAll('.dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIdx);
+    });
+  }
+
+  // ── RESET ─────────────────────────────────────────
+  function reset() {
+    resultSection.classList.remove('visible');
+    setTimeout(() => {
+      resultSection.style.display = 'none';
+      viewport.innerHTML = '';
+      taskInput.value = '';
+      submitBtn.disabled = false;
+      errorMsg.style.display = 'none';
+      inputSection.classList.remove('hidden');
+    }, 400);
+  }
+
+  // ── KEYBOARD ──────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (resultSection.classList.contains('visible')) {
+      if (e.key === 'ArrowLeft') navigate(-1);
+      if (e.key === 'ArrowRight') navigate(1);
+    }
+    if (e.key === 'Enter' && e.metaKey && inputSection.style.display !== 'none') {
+      submitTask();
+    }
+  });
+
+  // ── CONFETTI ──────────────────────────────────────
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const COLORS = ['#c9963a', '#e8be6a', '#f0e6ce', '#4caf6e', '#7a5a20', '#fff8e1'];
+    const pieces = Array.from({ length: 80 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height * 0.5,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 14 + 6,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: Math.random() * 3 + 1.5,
+      angle: Math.random() * Math.PI * 2,
+      va: (Math.random() - 0.5) * 0.12,
+      alpha: 1,
+    }));
+
+    let frame = 0;
+    const MAX_FRAMES = 160;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.angle += p.va;
+        if (frame > MAX_FRAMES * 0.6) p.alpha -= 0.016;
+      });
+
+      frame++;
+      if (frame < MAX_FRAMES) requestAnimationFrame(draw);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+  }
+</script>
+</body>
+</html>
