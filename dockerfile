@@ -30,4 +30,4 @@ EXPOSE 5000
 # daphne --bind 0.0.0.0 -p 8000 cineor.asgi:application
 # gunicorn --bind 0.0.0.0:8000 cineor.wsgi:application
 
-CMD ["sh", "-c", "gunicorn -w 4 -b 127.0.0.1:5000 app:app"]
+CMD ["sh", "-c", "gunicorn -w 4 -b 0.0.0.0:5000 app:app"]
