@@ -3,7 +3,6 @@ name: Docker Build and Push to GHCR
 on:
   push:
     branches:
-      - master  # Change this to your default branch if it's different
 
 jobs:
   build:
