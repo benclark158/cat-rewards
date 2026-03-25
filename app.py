@@ -125,10 +125,16 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no expl
   "score": 7.9,
 }}"""
 
-    response = client.models.generate_content(
-        model='gemini-3.1-flash-lite-preview',
-        contents=prompt,
-    )
+    try:
+        response = client.models.generate_content(
+            model='gemini-3.1-flash-lite-preview',
+            contents=prompt,
+        )
+    except:
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview',
+            contents=prompt,
+        )
 
     raw_text = response.text.strip()
 
