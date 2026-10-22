@@ -6,6 +6,10 @@ on:
       - master
       - main
 
+permissions:
+  contents: write # Needed to create GitHub Releases
+  packages: write  # Needed to push to GHCR
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,30 +18,32 @@ jobs:
       packages: write
     steps:
     # Step 1: Checkout the repository
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # Step 2: Log in to GitHub Container Registry
-    - name: Log in to GHCR
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Convert repository owner to lowercase
-      id: repo_owner_lowercase
-      run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Extract Metadata (Tags/Labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
 
-    - name: Log repository owner
-      run: echo "Repository owner in lowercase is $REPO_OWNER"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    # Step 3: Build the Docker image
-    - name: Build Docker image
-      run: |
-        docker build -t ghcr.io/$REPO_OWNER/cat-rewards:latest .
+      - name: Build and Push Docker Image
 
-    # Step 4: Push the Docker image to GHCR
-    - name: Push Docker image
-      run: |
-        docker push ghcr.io/$REPO_OWNER/cat-rewards:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
