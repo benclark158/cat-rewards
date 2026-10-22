@@ -1,5 +1,4 @@
-name: Docker Build and Push to GHCR
-
+name: Build Docker Image
 on:
   push:
     branches:
@@ -11,10 +10,13 @@ permissions:
   packages: write  # Needed to push to GHCR
 
 jobs:
-  build:
+  # ==========================================
+  # JOB 1: Build & Push Docker Image to GHCR
+  # ==========================================
+  build-docker:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     steps:
-    # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
